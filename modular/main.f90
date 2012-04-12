@@ -6,6 +6,8 @@ program surya
 	
    implicit none
 
+!      double precision :: mytimevalue
+
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ! Initialization
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
@@ -14,12 +16,17 @@ program surya
    call read_input()
    call allocate_variables()
 
+   mytimevalue=0.
+   print*, 'first checkpoint: ', mytimevalue
+  
    ! static field definitions
    call define_fields_grid()
    call define_fields_mid()
    call define_ddr()
    call define_mc_streamfunction()
    call define_mc_velocity()
+  
+   print*, 'second checkpoint: ', mytimevalue
 
    ! legendre polynomials
    call calculate_legendre()
@@ -30,18 +37,24 @@ program surya
    ! define matrix elements
    call define_matrix_elements()
 
+   print*, 'initialization complete'
+   
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ! Main Loop
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    kend = tmax/dt
-   t=0.0d0
+   mytimevalue=0.
+   print*, 'mytimevalue set to zero:'
+   print*, mytimevalue   ! this throws an error, why?
+   stop 'checkpoint reached'
    do k=1,kend
       call advance_interior()
       call advance_boundaries()
       call magnetic_buoyancy()
-      t=t+dt
+      mytimevalue=mytimevalue+dt
+      print*, 't is ', mytimevalue
       call record_data()
    end do
 

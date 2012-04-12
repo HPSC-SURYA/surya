@@ -29,7 +29,7 @@ module initialization
 		
       ! these particular variables used to be in common blocks:
       double precision, allocatable :: u(:,:), pl(:,:), sn(:)
-      double precision :: t
+      double precision :: mytimevalue
       integer :: it, l
 
       ! loop counters and scalar coordinates

@@ -7,6 +7,8 @@ module loop
 
    implicit none
 
+!      double precision :: mytimevalue
+
 contains
 
    subroutine advance_interior()
@@ -70,6 +72,8 @@ contains
                phi(i,j)=phi(i,j)+al(i,j)*ub(i,j)*dt/2.0d0
             end do
          end do
+         
+
 
       !  NOW FOR OTHER DIRECTION
 
@@ -184,7 +188,7 @@ contains
                 ub(nt,jer)=((ra(ier)/ra(nt))*0.5d0*ber) + bold
                 ub(ier,jer)=0.5d0*ber
                  open(25,file='ber.dat',status='unknown',access='append')
-                 write(25,'(d15.8,1x,d15.8,1x,d15.8)') t, qjer, ber
+                 write(25,'(d15.8,1x,d15.8,1x,d15.8)') mytimevalue, qjer, ber
                  close(25)
                end if
             end if
@@ -204,11 +208,11 @@ contains
 
       ! WRITING IN THE FILES 'rad.dat' and 'butbot.dat' after certain intervals of time
 
-      if (t.gt.0.0d0) then
+      if (mytimevalue.gt.0.0d0) then
 
          p20 = pi/20.
-         istep = t/p20
-         tdiff = t - float(istep)*p20
+         istep = mytimevalue/p20
+         tdiff = mytimevalue - float(istep)*p20
 
          if(.not.(tdiff.ge.dt)) then
 
@@ -217,8 +221,8 @@ contains
             do j = 2, n
                q=qm-float(j-1)/float(n)*qm
             br = -(u(n-1,j-1)*dsin(q-dq) - u(n-1,j+1)*dsin(q+dq))/(2.0d0*dq*dsin(q))/pm
-            write(17,'(f13.7,1x,f13.7,1x,f13.7)') t, q, br
-            write(18,'(f13.7,1x,f13.7,1x,f13.7)') t, q, ub(45,j)
+            write(17,'(f13.7,1x,f13.7,1x,f13.7)') mytimevalue, q, br
+            write(18,'(f13.7,1x,f13.7,1x,f13.7)') mytimevalue, q, ub(45,j)
             end do
             close(17)
             close(18)
@@ -233,8 +237,18 @@ contains
       if (k/40*40.eq.k) then
 
          open(95,file=run_filename,status='unknown',access='append')
-         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(45,74), ub(44,74), ub(45,54), u(120,122), u(120,6)
+!         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1)
+         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') mytimevalue, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
          close(95)
+
+!         print*, 'nmax = ', nmax
+!         print*, 'dimensions = ', shape(u)
+!         print*, 'dimensions = ', shape(ub)
+!         print*, 't is ', t
+ !        print*, 'u(2,3) is ', u(2,3)
+ !        print*, 'ub(2,3) is ', ub(2,3)
+
+         stop 'checkpoint reached'
 
       end if
 
