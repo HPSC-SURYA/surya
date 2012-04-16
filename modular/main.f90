@@ -1,12 +1,12 @@
 program surya
 
    use initialization
+   use staticfields
    use loop
-   use standalone
 	
    implicit none
 
-!      double precision :: mytimevalue
+!      double precision :: t
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ! Initialization
@@ -15,9 +15,6 @@ program surya
    ! read input namelists, allocate variables accordingly
    call read_input()
    call allocate_variables()
-
-   mytimevalue=0.
-   print*, 'first checkpoint: ', mytimevalue
   
    ! static field definitions
    call define_fields_grid()
@@ -26,8 +23,6 @@ program surya
    call define_mc_streamfunction()
    call define_mc_velocity()
   
-   print*, 'second checkpoint: ', mytimevalue
-
    ! legendre polynomials
    call calculate_legendre()
 
@@ -45,16 +40,12 @@ program surya
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    kend = tmax/dt
-   mytimevalue=0.
-   print*, 'mytimevalue set to zero:'
-   print*, mytimevalue   ! this throws an error, why?
-   stop 'checkpoint reached'
+   t=0.
    do k=1,kend
       call advance_interior()
       call advance_boundaries()
       call magnetic_buoyancy()
-      mytimevalue=mytimevalue+dt
-      print*, 't is ', mytimevalue
+      t=t+dt
       call record_data()
    end do
 

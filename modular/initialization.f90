@@ -1,10 +1,9 @@
-! these routines are executed only once, at the start of the program
+! read input, allocate variables, and define some functions that are commonly use throughout the code
 
 module initialization
 
-      use standalone
-
       implicit none
+      save  ! might need this to "preserve data values"
 
       ! general namelist declarations
       integer :: nmax, lmax, n
@@ -29,7 +28,7 @@ module initialization
 		
       ! these particular variables used to be in common blocks:
       double precision, allocatable :: u(:,:), pl(:,:), sn(:)
-      double precision :: mytimevalue
+      double precision :: t
       integer :: it, l
 
       ! loop counters and scalar coordinates
@@ -71,245 +70,186 @@ contains
 
    end subroutine allocate_variables
 
+   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   ! everything from here on was previously in standalone.f90
+   !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   ! i think all these "field definitions" can probably be merged into one nested do-loop (not that it would speed things up much)
+   subroutine tridag(a,b,c,d,x,n)
+   ! SUBROUTINE FOR INVERTING TRIDIAGONAL MATRIX
+   ! this is the original algorithm, translated into F90 compliant format
 
-   subroutine define_fields_grid()
-   ! define those fields with grid point resolution
+      integer, intent(in) :: n
+      double precision, dimension(nmax), intent(in) :: a, b, c, d
+      double precision, dimension(nmax), intent(inout) :: x
 
-      double precision :: co
+      integer :: j
+      double precision :: gam(nmax), bet
 
-	   open(25,file=dr_filename,status='unknown',access='append')   
-	   do i = 1, nmax
-
-         ! i-dependent stuff
-         ra(i)=pb+float(i-1)/float(n)*(pm-pb)
-         p=pb+float(i-1)/float(n)*(pm-pb)
-
-	   do j = 1, nmax
-
-         ! alpha, diffusivities, and differential rotation. DR is written out to dr_filename
-         q=qm-float(j-1)/float(n)*qm
-         co = dcos(q)
-         al(i,j) = 0.25d0*al0*co*(1.00d0+erf((p-0.95d0*pm)/(0.025d0*pm)))*(1.00d0-erf((p-pm)/(0.025d0*pm)))                                     ! ALPHA PROFILE
-         eta(i,j) = 0.000220d0 + (et0/2.00d0)*(1.0d0 + erf((p-0.7d0*pm)/(0.025d0*pm)))                                                          ! DIFFUSIVITY PROFILE
-         etab(i,j) = 0.00022d0 + (et1/2.00d0)*(1.0d0 + erf((p-0.72d0*pm)/(0.025d0*pm)))+ (et0/2.0d0)*(1.0d0+erf((p-0.975d0*pm)/(0.025d0*pm)))   ! DIFFUSIVITY PROFILE
-         dom(i,j) = 271.9d0 + 0.50d0*(1.000d0 + erf((p-0.7d0*pm)/(0.025d0*pm)))*(289.5d0 - 39.4d0*co*co - 42.2d0*co*co*co*co - 271.9d0)         ! SOLAR DIFFERENTIAL ROTATION PROFILE
-         write(25,'(f13.5,1x,f13.5,1x,f13.5)') q, p, dom(i,j)
-
-		end do
-    	end do
-    	close(25)
-
-   end subroutine define_fields_grid
-
-
-   subroutine define_fields_mid()
-   ! define those fields with midpoint precision
-
-      do i=1,2*n+1
-      do j=1,2*n+1
-
-         p=pb+float(i-1)*(pm-pb)/float(2*n)
-         etab2(i,j) = 0.00022d0 + (et1/2.00d0)*(1.0d0 + erf((p-0.72d0*pm)/(0.025d0*pm)))+ (et0/2.0d0)*(1.0d0+erf((p-0.975d0*pm)/(0.025d0*pm)))
-
-      end do
-      end do
-
-   end subroutine define_fields_mid
-
-   subroutine define_ddr()
-   ! define the derivatives of the DR profile
-
-      do i=2,n
-      do j=2,n
-
-         dror(i,j)=(dom(i+1,j)-dom(i-1,j))/(2.0d0*dp)  
-         drot(i,j)=(dom(i,j+1)-dom(i,j-1))/(2.0d0*dq)
-
-      end do
-      end do
-
-   end subroutine define_ddr
-
-   subroutine define_mc_streamfunction()
-   ! define the streamfunction (psi) for the meridional circulation
-   ! mid-point resolution
-
-      double precision :: beta1, beta2, pp, del, gm, p0, exq0, exqm, gau
-
-		beta1=1.5d0
-		beta2=1.8d0
-		pp=0.61d0*pm
-		del=2.0000001d0
-		gm=3.47d0
-		p0=(pm-pb)/4.00d0     
-   
-      open(82,file=mc_filename,status='unknown',access='append')
-
-      do i=1,2*n+1
-      do j=1,2*n+1
-
-         p=pb+float(i-1)/float(2*n)*(pm-pb)
-         q=qm-float(j-1)/float(2*n)*qm
-
-         if(q.le.pi/2.0d0) then
-         exq0=dexp(-beta1*q**del)
-         exqm=dexp(beta2*(q-pi/2.0d0))
-         gau=dexp(-((p-p0)/gm)**2)
-         psi(i,j)=(p-pp)*dsin(pi*(p-pp)/(pm-pp))*(1.00d0-exq0)*(1.00d0-exqm)*gau
-         end if 
-
-         if(q.gt.pi/2.0d0) then
-         exq0=dexp(-beta1*(pi-q)**del)
-         exqm=dexp(beta2*(pi/2.0d0-q))
-         gau=dexp(-((p-p0)/gm)**2)
-         psi(i,j)=-(p-pp)*dsin(pi*(p-pp)/(pm-pp))*(1.00d0-exq0)*(1.00d0-exqm)*gau
-         end if
-
-         if(p.le.pp)then
-         psi(i,j)=0.0d0
-         end if
-         write(82,'(f13.5,1x,f13.5,1x,f13.5)') q, p, psi(i,j)
-
-      end do
-      end do
-
-      close(82)
-
-   end subroutine define_mc_streamfunction
-
-
-   subroutine define_mc_velocity()
-   ! calculate the MC velocities from the streamfunction
-   ! mid-point resolution
-
-      do i=2,2*n
-      do j=2,2*n
-
-         p=pb+float(i-1)*(pm-pb)/float(2*n)
-         q=qm-float(j-1)*qm/float(2*n)
-         vp1(i,j)=0.95d0*v0*(psi(i,j+1)-psi(i,j-1))/(p**2*dsin(q)*dq*(pm/p-0.95d0)**1.5)
-         vq1(i,j)=-0.95d0*v0*(psi(i+1,j)-psi(i-1,j))/(p*dsin(q)*dp*(pm/p-0.95d0)**1.5)
-         deta(i,j)=(etab2(i+1,j)-etab2(i-1,j))/(dp)
-         vpb(i,j)=(vp1(i,j)-deta(i,j))*dt/(2.d0*p*dp)
-         vp(i,j)=vp1(i,j)*dt/(2.d0*p*dp)
-         vq(i,j)=vq1(i,j)*dt/(2.d0*p*dsin(q)*dq)
-
-      end do
-      end do
-
-   end subroutine define_mc_velocity
-
-
-   subroutine calculate_legendre()
-
-      double precision :: cl, x
-
-      do l=1,96
-
-         cl=1.0d0/(1.0d0+float(l)/float(l+1)*(pm/pw)**(2*l+1))
-         ss1_p(l)=float(2*l+1)/(float(l)*pm)*(cl-float(l)/float(l+1)*(1.0d0-cl))
-
-      do j=1,n+1
-
-         qm=4.0d0*atan(1.0d0)
-         q=qm+float(j-1)*dq
-         x=dcos(q)
-         pl(j,l) = plgndr(l,1,x)
-         sn(j) = dsin(q)
-
-      end do
-      end do
-
-   end subroutine calculate_legendre
-
-
-   subroutine initial_conditions()
-
-      double precision :: ursintheta
-
-      if (irelax.eq.0) then
-
-         do i = 1,nmax
-         do j = 1,nmax
-
-            p=pb+float(i-1)/float(n)*(pm-pb)
-            q=qm-float(j-1)/float(n)*qm
-            u(i,j) = 0.0d0
-            ub(i,j) = 1.0*dsin(1.0d0*q)*dsin(pi*((p-pb)/(pm-pb)))
-
+      if (.not.(b(1).eq.0.d0)) then
+         bet=b(1)
+         x(1)=d(1)/bet
+         do j=2,n
+            gam(j)=c(j-1)/bet
+            bet=b(j)-a(j)*gam(j)
+            if(.not.(bet.eq.0.d0)) x(j)=(d(j)-a(j)*x(j-1))/bet
          end do
+         do j=n-1,1,-1
+          x(j)=x(j)-gam(j+1)*x(j+1)
          end do
-
-      else
-
-         open(12,file=init_filename,status='unknown')
-
-         do i=1,n+1
-         do j=1,n+1
-
-            read(12,'(f13.7,1x,f13.7,1x,f13.7,1x,f13.7)') q, p, ursintheta, ub(i,j)
-            if(j.eq.n+1) then
-            ! boundary condition
-               u(i,j)=0.0d0
-            else
-               u(i,j)=ursintheta/(p*dsin(q))
-            end if
-
-         end do
-         end do
-
-         close(12)
-
       end if
 
-   end subroutine initial_conditions
+   end subroutine tridag
+	
+	subroutine tridag_wiki(a,b,c,v,x,n)
+      ! From Wikipedia (Tridiagonal Matrix Algorithm)
+
+      implicit none
+		!        a - sub-diagonal (means it is the diagonal below the main diagonal)
+		!        b - the main diagonal
+		!        c - sup-diagonal (means it is the diagonal above the main diagonal)
+		!        v - right part
+		!        x - the answer
+		!        n - number of equations
+ 
+      integer,intent(in) :: n
+      real(8),dimension(n),intent(in) :: a,b,c,v
+      real(8),dimension(n),intent(out) :: x
+      real(8),dimension(n) :: bp,vp
+      real(8) :: m
+      integer i
+ 
+		! Make copies of the b and v variables so that they are unaltered by this sub
+        bp(1) = b(1)
+        vp(1) = v(1)
+ 
+        !The first pass (setting coefficients):
+		do i = 2,n
+         m = a(i)/bp(i-1)
+         bp(i) = b(i) - m*c(i-1)
+         vp(i) = v(i) - m*vp(i-1)
+		end do
+ 
+         x(n) = vp(n)/bp(n)
+        !The second pass (back-substition)
+		do i = n-1, 1, -1
+          x(i) = (vp(i) - c(i)*x(i+1))/bp(i)
+		end do
+ 
+	end subroutine tridag_wiki
 
 
-   subroutine define_matrix_elements()
-   ! pre-compute coefficients for solvers
-   ! includes mesh geometry and velocity, since these never change
+	subroutine coeff(n,ss1,dq,j,cf)
+   !     THREE SUBROUTINES NEEDED FOR UPPER BOUNDARY CONDITION :
+   !       The subroutine plgndr calculates Legendre polynomials.
 
-      do i=2,2*n
-      do j=2,2*n
+      ! double precision :: cf
 
-         dvp(i,j)=(vp1(i+1,j)-vp1(i-1,j))/(dp)
+      integer, intent(in) :: n, j
+      double precision, intent(in) :: ss1(nmax)
+      double precision, intent(out) :: cf
 
+      ! this input does nothing
+      double precision, intent(in) :: dq
+
+      cf=0.0d0
+      do l=1,96
+         cf=cf+ss1(l)*pl(j,l)
       end do
+
+	end subroutine coeff
+
+
+
+	function ss(n,dq)
+
+      integer, intent(in) :: n
+      double precision, intent(in) :: dq
+
+      double precision :: y(nmax)
+      double precision :: term1, term2
+      integer :: i, k1, k2
+      double precision :: ss
+
+      do j=1,n+1
+         y(j)=pl(j,l)*u(n+1,j)*sn(j)
       end do
-
-      do i=2,n
-      do j=2,n
-
-         p=pb+float(i-1)/float(n)*(pm-pb)
-         q=qm-float(j-1)/float(n)*qm
-         a(i,j)=-(eta(i,j)*dt/(2.0d0*(p*dq)**2)+vq(2*i-1,2*j-1)*dsin(q-dq/2.0d0)*(1.0d0+vq(2*i-1,2*j-2)*dsin(q-dq))/2.0d0)
-         b(i,j)=-(-eta(i,j)*dt/((p*dq)**2)-eta(i,j)*dt/(2.0d0*dtan(q)*p*p*dq)-eta(i,j)*dt/(4.0d0*(p*dsin(q))**2)-vq(2*i-1,2*j-1)*(dsin(q+dq/2.0d0)*(1.0d0+vq(2*i-1,2*j)*dsin(q))-dsin(q-dq/2.0d0)*(1.0d0-vq(2*i-1,2*j-2)*dsin(q)))/2.0d0)
-         c(i,j)=-(eta(i,j)*dt/(2.0d0*(p*dq)**2)+eta(i,j)*dt/(2.0d0*dtan(q)*p*p*dq)-vq(2*i-1,2*j-1)*dsin(q+dq/2.0d0)*(1.0d0-vq(2*i-1,2*j)*dsin(q+dq))/2.0d0)
-         d(i,j)=-(eta(i,j)*dt/(2.0d0*dp**2)+vp(2*i-1,2*j-1)*(p-dp/2.0d0)*(1.0d0+vp(2*i-2,2*j-1)*(p-dp))/2.0d0-0.0d0*eta(i,j)*dt/(p*dp))
-         e(i,j)=-(-eta(i,j)*dt/(dp**2)-1.0d0*eta(i,j)*dt/(p*dp)-eta(i,j)*dt/(4.0d0*(p*dsin(q))**2)-vp(2*i-1,2*j-1)*(dp+p*((p+dp/2.0d0)*vp(2*i,2*j-1)+(p-dp/2.0d0)*vp(2*i-2,2*j-1)))/2.0d0)
-         f(i,j)=-(eta(i,j)*dt/(2.0d0*dp**2)+eta(i,j)*dt/(p*dp)-vp(2*i-1,2*j-1)*(p+dp/2.0d0)*(1.0d0-vp(2*i,2*j-1)*(p+dp))/2.0d0)
-
+      term1=0.0d0
+      do k1=2,n,2
+         term1=term1+y(k1)
       end do
+      term2=0.0d0
+      do k2=3,n-1,2
+         term2=term2+y(k2)
       end do
+      ss=dq/3.0d0*(y(1)+4.0d0*term1+2.0d0*term2+y(n+1))
 
-      do i=2,n
-      do j=2,n
+	end function ss
 
-         p=pb+float(i-1)/float(n)*(pm-pb)
-         q=qm-float(j-1)/float(n)*qm
-         ab(i,j)=-(etab(i,j)*dt/(2.0d0*(p*dq)**2)+vq(2*i-1,2*j-2)*dsin(q-dq/2.0d0)*(1.0d0+vq(2*i-1,2*j-3)*dsin(q-dq))/2.0d0)
-         bb(i,j)=-(-etab(i,j)*dt/((p*dq)**2)-etab(i,j)*dt/(2.0d0*dtan(q)*p*p*dq)-etab(i,j)*dt/(4.0d0*(p*dsin(q))**2)-(vq(2*i-1,2*j)*dsin(q+dq/2.0d0)*(1.0d0+vq(2*i-1,2*j-1)*dsin(q))-vq(2*i-1,2*j-2)*dsin(q-dq/2.0d0)*(1.0d0-vq(2*i-1,2*j-1)*dsin(q)))/2.0d0)
-         cb(i,j)=-(etab(i,j)*dt/(2.0d0*(p*dq)**2)+etab(i,j)*dt/(2.0d0*dtan(q)*p*p*dq)-vq(2*i-1,2*j)*dsin(q+dq/2.0d0)*(1.0d0-vq(2*i-1,2*j+1)*dsin(q+dq))/2.0d0)
-         db(i,j)=-(etab(i,j)*dt/(2.0d0*dp**2)-0.0d0*etab(i,j)*dt/(p*dp)+vpb(2*i-1,2*j-1)*(p-dp/2.0d0)*(1.0d0 +vpb(2*i-2,2*j-1)*(p-dp))/(2.0d0))
-         eb(i,j)=-(-etab(i,j)*dt/(dp**2)-1.0d0*etab(i,j)*dt/(p*dp)-etab(i,j)*dt/(4.0d0*(p*dsin(q))**2)-dvp(2*i-1,2*j-1)*dt/2.0d0-vpb(2*i-1,2*j-1)*(dp+vpb(2*i,2*j-1)*p*(p+dp/2.0d0)+(p-dp/2.0d0)*p*vpb(2*i-2,2*j-1))/2.0d0)
-         fb(i,j)=-(etab(i,j)*dt/(2.0d0*dp**2)+etab(i,j)*dt/(p*dp)-vpb(2*i-1,2*j-1)*(p+dp/2.0d0)*(1.0d0 -vpb(2*i,2*j-1)*(p+dp))/2.0d0)
 
-      end do
-      end do
+   function plgndr(l,m,x)
+      
+      double precision :: plgndr
+      integer, intent(in) :: l, m
+      double precision, intent(in) :: x
 
-   end subroutine define_matrix_elements
+      integer :: ll
+      double precision ::  pmm, pmmp1, somx2, fact, pll
+
+      if(m.lt.0.or.m.gt.l.or.abs(x).gt.1.0d0) stop 'function plgndr: bad arguments'
+
+      pmm=1.0d0
+
+      if(m.gt.0) then
+         somx2=dsqrt((1.0d0-x)*(1.0d0+x))
+         fact=1.0d0
+         do i=1,m
+            pmm=-pmm*fact*somx2
+            fact=fact+2.0d0
+         end do
+      end if
+
+      if(l.eq.m) then
+         plgndr=pmm
+      else
+         pmmp1=x*(2*m+1)*pmm
+         if(l.eq.m+1) then
+            plgndr=pmmp1
+         else
+            do ll=m+2,l
+               pll=(x*(2*ll-1)*pmmp1-(ll+m-1)*pmm)/(ll-m)
+               pmm=pmmp1
+               pmmp1=pll
+            end do
+            plgndr=pll
+         end if
+      end if
+
+   end function plgndr
+
+
+   ! Error Function
+   function erf(x)
+
+      double precision :: erf
+      double precision, intent(in) :: x
+
+      double precision :: p, a1, a2, a3, a4, a5
+      double precision :: sig, xabs, tmp
+
+      data p/0.3275911d0/, a1/0.254829592d0/, a2/-0.284496736d0/, a3/1.421413741d0/, a4/-1.453152027d0/, a5/1.061405429d0/
+
+      sig=sign(1.0d0,x)
+      xabs=dabs(x)
+      if (xabs.gt.20) then
+         erf=sig
+      else
+         tmp=1.0d0/(1.0d0+p*xabs)
+         erf=1.0d0-((((a5*tmp+a4)*tmp+a3)*tmp+a2)*tmp+a1)*tmp*exp(-xabs*xabs)
+         erf=erf*sig
+      endif
+
+   end function erf
+
 
 end module initialization
 

@@ -3,11 +3,10 @@
 module loop
 
    use initialization
-   use standalone
 
    implicit none
+   save
 
-!      double precision :: mytimevalue
 
 contains
 
@@ -15,6 +14,8 @@ contains
    ! part V-A
 
       double precision :: br, bt
+
+      print*, 'Entered subroutine: advance_interior'
 
       ! solve explicit side of A evolution
 
@@ -74,7 +75,6 @@ contains
          end do
          
 
-
       !  NOW FOR OTHER DIRECTION
 
       ! do implicit solve for A along constant theta, for all theta
@@ -125,6 +125,8 @@ contains
       integer :: nup
       double precision :: cf
 
+      print*, 'Entered subroutine: advance_boundaries'
+
       ! Boundary condition at bottom
 
          do j=1,n+1
@@ -166,6 +168,8 @@ contains
       double precision :: ber, bold, tau, qjer
       integer :: ier, jer, nmb, kmb, kch, n2, nt
 
+      print*, 'Entered subroutine: magnetic_buoyancy'
+
       tau = .0088d0
       nmb = tau/dt
       kmb = k/nmb
@@ -187,9 +191,9 @@ contains
                 bold=ub(nt,jer)
                 ub(nt,jer)=((ra(ier)/ra(nt))*0.5d0*ber) + bold
                 ub(ier,jer)=0.5d0*ber
-                 open(25,file='ber.dat',status='unknown',access='append')
-                 write(25,'(d15.8,1x,d15.8,1x,d15.8)') mytimevalue, qjer, ber
-                 close(25)
+                 open(26,file='ber.dat',status='unknown',access='append')
+                 write(26,'(d15.8,1x,d15.8,1x,d15.8)') t, qjer, ber
+                 close(26)
                end if
             end if
          end do
@@ -206,13 +210,15 @@ contains
       double precision :: br, p20, tdiff
       integer :: istep
 
+      print*, 'Entered subroutine: record_data'
+
       ! WRITING IN THE FILES 'rad.dat' and 'butbot.dat' after certain intervals of time
 
-      if (mytimevalue.gt.0.0d0) then
+      if (t.gt.0.0d0) then
 
          p20 = pi/20.
-         istep = mytimevalue/p20
-         tdiff = mytimevalue - float(istep)*p20
+         istep = t/p20
+         tdiff = t - float(istep)*p20
 
          if(.not.(tdiff.ge.dt)) then
 
@@ -221,12 +227,14 @@ contains
             do j = 2, n
                q=qm-float(j-1)/float(n)*qm
             br = -(u(n-1,j-1)*dsin(q-dq) - u(n-1,j+1)*dsin(q+dq))/(2.0d0*dq*dsin(q))/pm
-            write(17,'(f13.7,1x,f13.7,1x,f13.7)') mytimevalue, q, br
-            write(18,'(f13.7,1x,f13.7,1x,f13.7)') mytimevalue, q, ub(45,j)
+            write(17,'(f13.7,1x,f13.7,1x,f13.7)') t, q, br
+            write(18,'(f13.7,1x,f13.7,1x,f13.7)') t, q, ub(45,j)
             end do
             close(17)
             close(18)
-            close(19)
+            ! close(19) ! wtf?
+
+            print*, 'timestep ', k,', radial_filename and bottom_filename have been written to.'
 
          end if
 
@@ -236,20 +244,19 @@ contains
 
       if (k/40*40.eq.k) then
 
-         open(95,file=run_filename,status='unknown',access='append')
-!         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1)
-         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') mytimevalue, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
+         print*, 'about to open file: '//run_filename
+!         open(95,file=run_filename,status='unknown',access='append')   ! old
+         open(95, file=run_filename, position='append')  ! this seg-faults. why?
+         print*, 'opened file: '//run_filename
+
+!         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1) ! old, too big
+         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
          close(95)
 
-!         print*, 'nmax = ', nmax
-!         print*, 'dimensions = ', shape(u)
-!         print*, 'dimensions = ', shape(ub)
-!         print*, 't is ', t
- !        print*, 'u(2,3) is ', u(2,3)
- !        print*, 'ub(2,3) is ', ub(2,3)
 
-         stop 'checkpoint reached'
 
+            print*, 'timestep ', k,', run_filename has been written to.'
+            stop 'CHECKPOINT REACHED'
       end if
 
    end subroutine record_data
