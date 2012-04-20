@@ -137,7 +137,7 @@ contains
       ! Boundary condition at top surface
 
          do nup=1,11
-            do l=1,96
+            do l=1,lmax
                ss1(l)=ss1_p(l)*ss(n,dq)
             end do
             do j=1,n+1

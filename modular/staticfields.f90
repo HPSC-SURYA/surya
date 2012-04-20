@@ -143,7 +143,7 @@ contains
 
       double precision :: cl, x
 
-      do l=1,96
+      do l=1,lmax
 
          cl=1.0d0/(1.0d0+float(l)/float(l+1)*(pm/pw)**(2*l+1))
          ss1_p(l)=float(2*l+1)/(float(l)*pm)*(cl-float(l)/float(l+1)*(1.0d0-cl))

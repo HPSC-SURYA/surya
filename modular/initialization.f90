@@ -61,13 +61,13 @@ contains
 
    subroutine allocate_variables()
    ! allocate variables based on problem size
-
-      allocate( a(nmax,nmax),b(nmax,nmax),c(nmax,nmax),d(nmax,nmax),e(nmax,nmax),f(nmax,nmax) )
+      
+	  allocate( a(nmax,nmax),b(nmax,nmax),c(nmax,nmax),d(nmax,nmax),e(nmax,nmax),f(nmax,nmax) )
       allocate( vp(2*nmax,2*nmax),vq(2*nmax,2*nmax),a1(nmax),b1(nmax),c1(nmax),r(nmax),phi(nmax,nmax),phib(nmax,nmax),ss1(nmax),uub(nmax),uu(nmax),al(nmax,nmax),dom(nmax,nmax),u(nmax,nmax),ub(nmax,nmax),ra(nmax) )
       allocate( ab(nmax,nmax),bb(nmax,nmax),cb(nmax,nmax),db(nmax,nmax),eb(nmax,nmax),fb(nmax,nmax) )
       allocate( eta(nmax,nmax),dror(nmax,nmax),drot(nmax,nmax),vp1(2*nmax,2*nmax),vq1(2*nmax,2*nmax),psi(2*nmax,2*nmax),etab(nmax,nmax),ss1_p(nmax),etab2(2*nmax,2*nmax),dvp(2*nmax,2*nmax),vpb(2*nmax,2*nmax),deta(2*nmax,2*nmax) )
       allocate( pl(nmax,lmax),sn(nmax) )
-
+   
    end subroutine allocate_variables
 
    !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -152,7 +152,7 @@ contains
       double precision, intent(in) :: dq
 
       cf=0.0d0
-      do l=1,96
+      do l=1,lmax
          cf=cf+ss1(l)*pl(j,l)
       end do
 

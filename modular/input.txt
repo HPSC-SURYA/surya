@@ -1,5 +1,5 @@
 $general
-	nmax=8
+	nmax=129
    lmax=96
 	dr_filename='diffrot.dat'
    mc_filename='psi.dat'
