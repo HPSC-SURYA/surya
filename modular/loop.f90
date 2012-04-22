@@ -10,6 +10,13 @@ module loop
 
 contains
 
+   subroutine open_all_timestep_loop_files()
+      open(26,file='ber.dat',status='unknown',access='append')
+      open(17,file=radial_filename,status='unknown',access='append') 
+      open(18,file=bottom_filename,status='unknown',access='append') 
+      open(95, file=run_filename, position='append')  ! this seg-faults. why?
+   end subroutine open_all_timestep_loop_files
+
    subroutine advance_interior()
    ! part V-A
 
@@ -191,9 +198,7 @@ contains
                 bold=ub(nt,jer)
                 ub(nt,jer)=((ra(ier)/ra(nt))*0.5d0*ber) + bold
                 ub(ier,jer)=0.5d0*ber
-                 open(26,file='ber.dat',status='unknown',access='append')
                  write(26,'(d15.8,1x,d15.8,1x,d15.8)') t, qjer, ber
-                 close(26)
                end if
             end if
          end do
@@ -222,16 +227,12 @@ contains
 
          if(.not.(tdiff.ge.dt)) then
 
-            open(17,file=radial_filename,status='unknown',access='append') 
-            open(18,file=bottom_filename,status='unknown',access='append') 
             do j = 2, n
                q=qm-float(j-1)/float(n)*qm
             br = -(u(n-1,j-1)*dsin(q-dq) - u(n-1,j+1)*dsin(q+dq))/(2.0d0*dq*dsin(q))/pm
             write(17,'(f13.7,1x,f13.7,1x,f13.7)') t, q, br
             write(18,'(f13.7,1x,f13.7,1x,f13.7)') t, q, ub(45,j)
             end do
-            close(17)
-            close(18)
             ! close(19) ! wtf?
 
             ! print*, 'timestep ', k,', radial_filename and bottom_filename have been written to.'
@@ -246,7 +247,6 @@ contains
 
          ! print*, 'about to open file: '//run_filename
 !         open(95,file=run_filename,status='unknown',access='append')   ! old
-         open(95, file=run_filename, position='append')  ! this seg-faults. why?
          ! print*, 'opened file: '//run_filename
 
 !         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1) ! old, too big
@@ -254,7 +254,6 @@ contains
          write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(45,74), ub(44,74), ub(45,54), u(120,122), u(120,6)
          !write(95,90)t,ub(45,74),ub(44,74),ub(45,54), u(120,122),u(120,6)
 
-         close(95)
 
 
 
@@ -263,5 +262,12 @@ contains
       end if
 
    end subroutine record_data
+
+   subroutine close_all_timestep_loop_files()
+      close(26)
+      close(17)
+      close(18)
+      close(95)
+   end subroutine close_all_timestep_loop_files
 
 end module loop

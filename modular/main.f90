@@ -41,6 +41,7 @@ program surya
 
    kend = tmax/dt
    t=0.
+   call open_all_timestep_loop_files()
    do k=1,kend
       call advance_interior()
       call advance_boundaries()
@@ -48,6 +49,7 @@ program surya
       t=t+dt
       call record_data()
    end do
+   call close_all_timestep_loop_files()
 
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
