@@ -16,6 +16,13 @@ contains
 
       double precision :: co
 
+           pm=6.96d0
+           pb=0.55d0*pm
+           pw=500.0d0
+           qm=pi
+           dp=(pm-pb)/float(n)
+           dq=-qm/float(n)
+
 	   open(25,file=dr_filename,status='unknown',access='append')   
 	   do i = 1, nmax
 
