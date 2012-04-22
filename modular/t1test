@@ -1,0 +1,52 @@
+# Remove any data files from previous runs
+rm -f diffrot.dat psi.dat final.dat run.dat ber.dat butbot.dat rad.dat
+
+# If there is an existing input.txt file, move it to some other name
+# so the script can move in its own copy
+if [ -e "input.txt" ]
+then
+  mv input.txt backup.input.txt
+fi
+
+# Copy in options file that does one timestep
+cp oneTimestepTest/input.txt .
+
+# Run program for one timestep
+./surya
+
+# Restore the options file to the original one
+if [ -e "backup.input.txt" ]
+then
+  rm -f input.txt
+  mv backup.input.txt input.txt
+fi
+
+# Compare each of the output files to the master output files
+anyDifferences=0
+diff diffrot.dat oneTimestepTest/diffrot.dat > /dev/null
+if [ $? != 0 ]
+then
+  echo "The diffrot.dat file is different."
+  anyDifferences=1
+fi
+diff psi.dat oneTimestepTest/psi.dat > /dev/null
+if [ $? != 0 ]
+then
+  echo "The psi.dat file is different."
+  anyDifferences=1
+fi
+diff final.dat oneTimestepTest/final.dat > /dev/null
+if [ $? != 0 ]
+then
+  echo "The final.dat file is different."
+  anyDifferences=1
+fi
+
+# If no files are different, write out a message that the test was successful
+if [ $anyDifferences -eq 0 ]
+then
+  echo "The program's output is correct for the case of a single timestep."
+else
+  echo "##### ERROR #####"
+  echo "At least one of the output files from the surya program was not correct."
+fi
