@@ -1,0 +1,30 @@
+$general
+	nmax=129
+   lmax=96
+	dr_filename='diffrot.dat'
+   mc_filename='psi.dat'
+   init_filename='init.dat'
+   radial_filename='rad.dat'
+   bottom_filename='butbot.dat'
+   run_filename='run.dat'
+   final_filename='final.dat'
+/
+
+
+&part1
+	irelax=0    ! irelax=0 means code-init, irelax=1 means use init.dat
+	tmax=0.002d0  ! max time of computation (1e8 s)
+	v0=-29.0d0  ! amplitude of meridional flow (m/s)
+	et0=2.6d0   ! poloidal diffusivity (1e12 cm2/s)
+	et1=0.04d0  ! toroidal diffusivity (1e12 cm2/s)
+	al0=25.0d0  ! alpha-effect amplitude (m/s)
+	dt=0.0002d0 ! time step (1e8 s) ! NOTE: Must satisfy the Courant condition (explicit?)
+/
+
+
+&part2
+	pm=6.96d0   ! outer radius (1e10 cm)
+	lbf=0.55d0	! lower boundary fraction (of the radius)
+	pw=500.0d0  ! ???
+	qmf=1       ! range of theta fraction, set to 1 for full range (zero to pi) 
+/

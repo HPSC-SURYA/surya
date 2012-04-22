@@ -250,13 +250,16 @@ contains
          print*, 'opened file: '//run_filename
 
 !         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1) ! old, too big
-         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
+!         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
+         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(45,74), ub(44,74), ub(45,54), u(120,122), u(120,6)
+         !write(95,90)t,ub(45,74),ub(44,74),ub(45,54), u(120,122),u(120,6)
+
          close(95)
 
 
 
             print*, 'timestep ', k,', run_filename has been written to.'
-            stop 'CHECKPOINT REACHED'
+            !stop 'CHECKPOINT REACHED'
       end if
 
    end subroutine record_data
