@@ -15,7 +15,7 @@ contains
 
       double precision :: br, bt
 
-      print*, 'Entered subroutine: advance_interior'
+      ! print*, 'Entered subroutine: advance_interior'
 
       ! solve explicit side of A evolution
 
@@ -125,7 +125,7 @@ contains
       integer :: nup
       double precision :: cf
 
-      print*, 'Entered subroutine: advance_boundaries'
+      ! print*, 'Entered subroutine: advance_boundaries'
 
       ! Boundary condition at bottom
 
@@ -168,7 +168,7 @@ contains
       double precision :: ber, bold, tau, qjer
       integer :: ier, jer, nmb, kmb, kch, n2, nt
 
-      print*, 'Entered subroutine: magnetic_buoyancy'
+      ! print*, 'Entered subroutine: magnetic_buoyancy'
 
       tau = .0088d0
       nmb = tau/dt
@@ -210,7 +210,7 @@ contains
       double precision :: br, p20, tdiff
       integer :: istep
 
-      print*, 'Entered subroutine: record_data'
+      ! print*, 'Entered subroutine: record_data'
 
       ! WRITING IN THE FILES 'rad.dat' and 'butbot.dat' after certain intervals of time
 
@@ -234,7 +234,7 @@ contains
             close(18)
             ! close(19) ! wtf?
 
-            print*, 'timestep ', k,', radial_filename and bottom_filename have been written to.'
+            ! print*, 'timestep ', k,', radial_filename and bottom_filename have been written to.'
 
          end if
 
@@ -244,10 +244,10 @@ contains
 
       if (k/40*40.eq.k) then
 
-         print*, 'about to open file: '//run_filename
+         ! print*, 'about to open file: '//run_filename
 !         open(95,file=run_filename,status='unknown',access='append')   ! old
          open(95, file=run_filename, position='append')  ! this seg-faults. why?
-         print*, 'opened file: '//run_filename
+         ! print*, 'opened file: '//run_filename
 
 !         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(nmax/2,nmax/2), ub(nmax/2+1,nmax/2+1), ub(nmax/2+2,nmax/2+2), u(nmax/2,nmax/2), u(nmax/2+1,nmax/2+1) ! old, too big
 !         write(95,'(d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9,1x,d15.9)') t, ub(2,3), ub(3,2), ub(4,5), u(2,3), u(3,2)
@@ -258,7 +258,7 @@ contains
 
 
 
-            print*, 'timestep ', k,', run_filename has been written to.'
+            ! print*, 'timestep ', k,', run_filename has been written to.'
             !stop 'CHECKPOINT REACHED'
       end if
 

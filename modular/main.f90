@@ -32,7 +32,7 @@ program surya
    ! define matrix elements
    call define_matrix_elements()
 
-   print*, 'initialization complete'
+   ! print*, 'initialization complete'
    
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
